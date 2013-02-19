@@ -1,0 +1,20 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Euler96", "Euler96.csproj", "{447F6E68-D41D-455B-8879-8334BFC54243}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x86 = Debug|x86
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{447F6E68-D41D-455B-8879-8334BFC54243}.Debug|x86.ActiveCfg = Debug|x86
+		{447F6E68-D41D-455B-8879-8334BFC54243}.Debug|x86.Build.0 = Debug|x86
+		{447F6E68-D41D-455B-8879-8334BFC54243}.Release|x86.ActiveCfg = Release|x86
+		{447F6E68-D41D-455B-8879-8334BFC54243}.Release|x86.Build.0 = Release|x86
+	EndGlobalSection
+	GlobalSection(MonoDevelopProperties) = preSolution
+		StartupItem = Euler96.csproj
+	EndGlobalSection
+EndGlobal
