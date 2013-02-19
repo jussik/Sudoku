@@ -2,15 +2,15 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Euler96
+namespace Sudoku
 {
 	/// <summary>
-	/// A single Sudoku puzzle.
+	/// A single Sudoku <see cref="Puzzle"/>.
 	/// </summary>
-	public class Sudoku
+	public class Puzzle
 	{
 		/// <summary>
-		/// The current name of the puzzle.
+		/// The current name of the <see cref="Puzzle"/>.
 		/// </summary>
 		public string Name { get; private set; }
 		/// <summary>
@@ -19,25 +19,25 @@ namespace Euler96
 		public string GridString { get; private set; }
 
 		/// <summary>
-		/// The Grid instance of the puzzle.
+		/// The Grid instance of the <see cref="Puzzle"/>.
 		/// </summary>
 		public Grid Grid { get; private set; }
 		/// <summary>
-		/// Gets a value indicating whether this puzzle is solved.
+		/// Gets a value indicating whether this <see cref="Puzzle"/> is solved.
 		/// </summary>
 		public bool Solved { get; private set; }
 
 		/// <summary>
-		/// Initializes a new <see cref="Sudoku"/> puzzle instance.
+		/// Initializes a new Sudoku <see cref="Puzzle"/> instance.
 		/// </summary>
-		public Sudoku(string name, string gridString)
+		public Puzzle(string name, string gridString)
 		{
 			Name = name;
 			GridString = gridString;
 		}
 
 		/// <summary>
-		/// Solve the puzzle.
+		/// Solve the <see cref="Puzzle"/>.
 		/// </summary>
 		public void Solve()
 		{
@@ -52,7 +52,7 @@ namespace Euler96
 		}
 		
 		/// <summary>
-		/// Get the integer representing the first 3 numbers of the puzzle.
+		/// Get the integer representing the first 3 numbers of the <see cref="Puzzle"/>.
 		/// </summary>
 		public int GetTriple()
 		{
@@ -62,14 +62,14 @@ namespace Euler96
 		}
 
 		/// <summary>
-		/// Repeat solvers until no further changes are registered or the puzzle is solved.
+		/// Repeat solvers until no further changes are registered or the <see cref="Puzzle"/> is solved.
 		/// </summary>
 		private bool IterateSolvers(params Func<bool>[] funcs)
 		{
 			return IterateSolvers(funcs.AsEnumerable());
 		}
 		/// <summary>
-		/// Repeat solvers until no further changes are registered or the puzzle is solved.
+		/// Repeat solvers until no further changes are registered or the <see cref="Puzzle"/> is solved.
 		/// </summary>
 		private bool IterateSolvers(IEnumerable<Func<bool>> funcs)
 		{

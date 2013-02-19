@@ -1,10 +1,10 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Euler96
+namespace Sudoku
 {
 	/// <summary>
-	/// A single cell in a <see cref="Sudoku"/> puzzle.
+	/// A single cell in a Sudoku <see cref="Puzzle"/>.
 	/// </summary>
 	public class Cell
 	{

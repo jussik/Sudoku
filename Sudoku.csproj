@@ -7,8 +7,8 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{447F6E68-D41D-455B-8879-8334BFC54243}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>Euler96</RootNamespace>
-    <AssemblyName>Euler96</AssemblyName>
+    <RootNamespace>Sudoku</RootNamespace>
+    <AssemblyName>Sudoku</AssemblyName>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
     <DebugSymbols>True</DebugSymbols>
@@ -41,7 +41,7 @@
     <Compile Include="Segment.cs" />
     <Compile Include="Grid.cs" />
     <Compile Include="Application.cs" />
-    <Compile Include="Sudoku.cs" />
+    <Compile Include="Puzzle.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

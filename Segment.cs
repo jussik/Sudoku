@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Euler96
+namespace Sudoku
 {
 	/// <summary>
 	/// A segment of <see cref="Cell"/>s in a <see cref="Grid"/>.
