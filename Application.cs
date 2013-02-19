@@ -1,13 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
-using System.Diagnostics;
 
 namespace Euler96
 {
+	/// <summary>
+	/// The main Sudoku solver application.
+	/// </summary>
 	public class Application
 	{
 		public static void Main(string[] args)
@@ -52,7 +52,7 @@ namespace Euler96
 
 				// Start new threads if deemed useful
 				Task task = Task.Factory.StartNew(() => {
-					game.Run();
+					game.Solve();
 
 					count++;
 					if(game.Solved) {

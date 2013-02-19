@@ -1,66 +1,104 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Threading;
 
 namespace Euler96
 {
+	/// <summary>
+	/// A single Sudoku puzzle.
+	/// </summary>
 	public class Sudoku
 	{
+		/// <summary>
+		/// The current name of the puzzle.
+		/// </summary>
 		public string Name { get; private set; }
+		/// <summary>
+		/// The grid contents as a string.
+		/// </summary>
 		public string GridString { get; private set; }
 
+		/// <summary>
+		/// The Grid instance of the puzzle.
+		/// </summary>
 		public Grid Grid { get; private set; }
+		/// <summary>
+		/// Gets a value indicating whether this puzzle is solved.
+		/// </summary>
 		public bool Solved { get; private set; }
 
+		/// <summary>
+		/// Initializes a new <see cref="Sudoku"/> puzzle instance.
+		/// </summary>
 		public Sudoku(string name, string gridString)
 		{
 			Name = name;
 			GridString = gridString;
 		}
 
-		public void Run()
+		/// <summary>
+		/// Solve the puzzle.
+		/// </summary>
+		public void Solve()
 		{
 			Grid = new Grid();
 			Grid.Load(GridString);
 
 			while (!Solved) {
 				// repeat all solvers until solved or no change happens in any solver
-				if(!IterateSolvers(FindSingles, DeepCheck))
+				if(!IterateSolvers(FindSingles, FindHiddenSingles))
 					break;
 			}
 		}
-
-		bool IterateSolvers(params Func<bool>[] actions)
+		
+		/// <summary>
+		/// Get the integer representing the first 3 numbers of the puzzle.
+		/// </summary>
+		public int GetTriple()
 		{
-			return IterateSolvers(actions.AsEnumerable());
+			return Grid.Cells[0].Value * 100
+				+ Grid.Cells[1].Value * 10
+					+ Grid.Cells[2].Value;
 		}
-		bool IterateSolvers(IEnumerable<Func<bool>> actions)
+
+		/// <summary>
+		/// Repeat solvers until no further changes are registered or the puzzle is solved.
+		/// </summary>
+		private bool IterateSolvers(params Func<bool>[] funcs)
+		{
+			return IterateSolvers(funcs.AsEnumerable());
+		}
+		/// <summary>
+		/// Repeat solvers until no further changes are registered or the puzzle is solved.
+		/// </summary>
+		private bool IterateSolvers(IEnumerable<Func<bool>> funcs)
 		{
 			bool change = false;
 			// run head of actions until it has no more effect
-			Func<bool> func = actions.First();
-			Console.WriteLine("Attempting {0}", func.Method.Name);
+			Func<bool> func = funcs.First();
+			//Console.WriteLine("Attempting {0}", func.Method.Name);
 			while (func()) {
-				Console.WriteLine("Success");
+				//Console.WriteLine("Success");
 				change = true;
 			}
 
 			// check for solved
 			if (Grid.Cells.All(c => c.Value > 0)) {
-				Console.WriteLine("Solved!");
+				//Console.WriteLine("Solved!");
 				Solved = true;
 			}
 
 			// continue using rest of actions, mark changed as true if rest changed
-			if(!Solved && actions.Count() > 1)
-				change = IterateSolvers(actions.Skip(1)) || change;
+			if(!Solved && funcs.Count() > 1)
+				change = IterateSolvers(funcs.Skip(1)) || change;
 
 			return change;
 		}
 
-		public bool FindSingles()
+		/// <summary>
+		/// Solve for cells where they only have a single possible value.
+		/// </summary>
+		private bool FindSingles()
 		{
 			bool changed = false;
 			foreach(Cell cell in Grid.Cells) {
@@ -83,12 +121,14 @@ namespace Euler96
 		
 		private int[] deepCheckResultCounts = new int[10];
 		private Cell[] deepCheckResultTargets = new Cell[10];
-		public bool DeepCheck()
+		/// <summary>
+		/// Solve for cells where their adjacents have no mutual possible values.
+		/// </summary>
+		private bool FindHiddenSingles()
 		{
-			return DeepCheckInner(Grid.Rows) || DeepCheckInner(Grid.Columns) || DeepCheckInner(Grid.Boxes);
+			return FindHiddenSinglesInner(Grid.Rows) || FindHiddenSinglesInner(Grid.Columns) || FindHiddenSinglesInner(Grid.Boxes);
 		}
-
-		public bool DeepCheckInner(IEnumerable<Segment> segments)
+		private bool FindHiddenSinglesInner(IEnumerable<Segment> segments)
 		{
 			bool changed = false;
 			foreach (Segment seg in segments) {
@@ -116,13 +156,6 @@ namespace Euler96
 				}
 			}
 			return changed;
-		}
-
-		public int GetTriple()
-		{
-			return Grid.Cells[0].Value * 100
-				+ Grid.Cells[1].Value * 10
-				+ Grid.Cells[2].Value;
 		}
 	}
 }

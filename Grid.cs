@@ -1,16 +1,30 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace Euler96
 {
 	public class Grid
 	{
+		/// <summary>
+		/// All of the <see cref="Cell"/>s in the <see cref="Grid"/>.
+		/// </summary>
 		public Cell[] Cells { get; private set; }
+		/// <summary>
+		/// All of the <see cref="Row"/>s in the <see cref="Grid"/>.
+		/// </summary>
 		public Row[] Rows { get; private set; }
+		/// <summary>
+		/// All of the <see cref="Column"/>s in the <see cref="Grid"/>.
+		/// </summary>
 		public Column[] Columns { get; private set; }
+		/// <summary>
+		/// All of the <see cref="Box"/>es in the <see cref="Grid"/>.
+		/// </summary>
 		public Box[] Boxes { get; private set; }
 
+		/// <summary>
+		/// Load the <see cref="Grid"/> with the contents of the string.
+		/// </summary>
 		public void Load(string gridString)
 		{
 			if(gridString.Length < 81)
@@ -51,20 +65,32 @@ namespace Euler96
 			}
 		}
 
+		/// <summary>
+		/// Returns a <see cref="String"/> that represents the current <see cref="Grid"/>.
+		/// </summary>
 		public override string ToString()
 		{
 			return string.Join<Row>("\n", Rows);
 		}
 
-		private Row RowOf(int i) {
+		/// <summary>
+		/// Returns the <see cref="Row"/> at a specific location index.
+		/// </summary>
+		public Row RowOf(int i) {
 			return Rows[i / 9];
 		}
-
-		private Column ColumnOf(int i) {
+		
+		/// <summary>
+		/// Returns the <see cref="Column"/> at a specific location index.
+		/// </summary>
+		public Column ColumnOf(int i) {
 			return Columns[i % 9];
 		}
-
-		private Box BoxOf(int i) {
+		
+		/// <summary>
+		/// Returns the <see cref="Box"/> at a specific location index.
+		/// </summary>
+		public Box BoxOf(int i) {
 			return Boxes[(i % 9 ) / 3 + 3 * (i / 27)];
 		}
 	}
