@@ -6,7 +6,18 @@ namespace Euler96
 {
 	public class Cell
 	{
-		public int Value { get; set; }
+		public int val;
+		public int Value {
+			get {
+				return val;
+			}
+			set {
+				val = value;
+				foreach(Cell adj in AdjacentCells) {
+					adj.Possibilities.Remove(val);
+				}
+			}
+		}
 		public HashSet<int> Possibilities { get; set; }
 		
 		public int Location { get; set; }

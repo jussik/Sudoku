@@ -27,27 +27,27 @@ namespace Euler96
 
 			Cells = new Cell[81];
 			for (var i=0; i<81; i++) {
+				Cell c = new Cell {
+					Grid = this,
+					Location = i,
+					
+					Row = RowOf(i),
+					Column = ColumnOf(i),
+					Box = BoxOf(i)
+				};
+
+				c.Possibilities.UnionWith(Enumerable.Range(1,9));
+				
+				Cells[i] = c;
+			}
+
+			// Needs to be in two passes as settings values requires all adjacents to exist
+			for (var i=0; i<81; i++) {
 				int val = gridString[i] - 48;
 				if(val < 0 || val > 9)
 					throw new Exception("Unexpected character in input: " + gridString[i]);
 
-				Cell c = new Cell {
-					Grid = this,
-					Location = i,
-
-					Row = RowOf(i),
-					Column = ColumnOf(i),
-					Box = BoxOf(i),
-
-					Value = val
-				};
-
-				if(val > 0)
-					c.Possibilities.Add(val);
-				else
-					c.Possibilities.UnionWith(Enumerable.Range(1,9));
-
-				Cells[i] = c;
+				Cells[i].Value = val;
 			}
 		}
 
