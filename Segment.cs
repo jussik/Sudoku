@@ -20,7 +20,7 @@ namespace Sudoku
 		/// <summary>
 		/// All of the <see cref="Cell"/>s in the segment.
 		/// </summary>
-		public IEnumerable<Cell> Cells {
+		public Cell[] Cells {
 			get {
 				if(cells == null) {
 					cells = new Cell[9];
@@ -85,6 +85,42 @@ namespace Sudoku
 	/// </summary>
 	public class Box : Segment
 	{
+		private Row[] rows;
+		/// <summary>
+		/// Gets the <see cref="Row"/>s that intersect with this <see cref="Box"/>.
+		/// </summary>
+		public Row[] Rows {
+			get {
+				if(rows ==  null) {
+					int start = (Id/3) * 3;
+					rows = new Row[] {
+						Grid.Rows[start],
+						Grid.Rows[start + 1],
+						Grid.Rows[start + 2]
+					};
+				}
+				return rows;
+			}
+		}
+
+		private Column[] columns;
+		/// <summary>
+		/// Gets the <see cref="Column"/>s that intersect with this <see cref="Box"/>.
+		/// </summary>
+		public Column[] Columns {
+			get {
+				if(columns ==  null) {
+					int start = (Id%3) * 3;
+					columns = new Column[] {
+						Grid.Columns[start],
+						Grid.Columns[start + 1],
+						Grid.Columns[start + 2]
+					};
+				}
+				return columns;
+			}
+		}
+
 		public Box(int id, Grid grid) : base(id, grid) { }
 
 		protected override void InitCells()

@@ -4,6 +4,8 @@ using System.Linq;
 
 namespace Sudoku
 {
+	// NOTE: Algorithms based on: http://angusj.com/sudoku/hints.php
+
 	/// <summary>
 	/// A single Sudoku <see cref="Puzzle"/>.
 	/// </summary>
@@ -46,13 +48,14 @@ namespace Sudoku
 
 			while (!Solved) {
 				// repeat all solvers until solved or no change happens in any solver
-				if(!IterateSolvers(FindSingles, FindHiddenSingles))
+				if(!IterateSolvers(FindSingles, FindHiddenSingles, FindLockedCandidates1))
 					break;
 			}
 		}
 		
 		/// <summary>
 		/// Get the integer representing the first 3 numbers of the <see cref="Puzzle"/>.
+		/// Used in Project Euler Problem 96.
 		/// </summary>
 		public int GetTriple()
 		{
@@ -76,15 +79,12 @@ namespace Sudoku
 			bool change = false;
 			// run head of actions until it has no more effect
 			Func<bool> func = funcs.First();
-			//Console.WriteLine("Attempting {0}", func.Method.Name);
 			while (func()) {
-				//Console.WriteLine("Success");
 				change = true;
 			}
 
 			// check for solved
-			if (Grid.Cells.All(c => c.Value > 0)) {
-				//Console.WriteLine("Solved!");
+			if (change && Grid.Cells.All(c => c.Value > 0)) {
 				Solved = true;
 			}
 
@@ -119,8 +119,8 @@ namespace Sudoku
 			return changed;
 		}
 		
-		private int[] deepCheckResultCounts = new int[10];
-		private Cell[] deepCheckResultTargets = new Cell[10];
+		private int[] hiddenSinglesResultCounts = new int[10];
+		private Cell[] hiddenSinglesResultTargets = new Cell[10];
 		/// <summary>
 		/// Solve for cells where their adjacents have no mutual possible values.
 		/// </summary>
@@ -134,28 +134,74 @@ namespace Sudoku
 			foreach (Segment seg in segments) {
 				// reset counts for every row/col/box
 				for(var i=0;i<10;i++) {
-					deepCheckResultCounts[i] = 0;
+					hiddenSinglesResultCounts[i] = 0;
 				}
 
 				// count how many times a possibility appears for this row/col/box
 				foreach (Cell c in seg.Cells) {
 					if(c.Value == 0) {
 						foreach (int p in c.Possibilities) {
-							deepCheckResultCounts[p]++;
-							deepCheckResultTargets[p] = c;
+							hiddenSinglesResultCounts[p]++;
+							hiddenSinglesResultTargets[p] = c;
 						}
 					}
 				}
 
 				// if we find a possibility with a single owner cell, apply that value to the cell
 				for (var i=1; i<=9; i++) {
-					if(deepCheckResultCounts[i] == 1) {
-						deepCheckResultTargets[i].Value = i;
+					if(hiddenSinglesResultCounts[i] == 1) {
+						hiddenSinglesResultTargets[i].Value = i;
 						changed = true;
 					}
 				}
 			}
 			return changed;
+		}
+
+		// if a row has a specific possiblity, it is flagged under the index of that possibility value.
+		// row 0 is 0b001, row 1 is 0b010, row 2 is 0b100.
+		// e.g. if both rows 0 and 2 have 8 as a possiblity, then locked1ResultCounts[8] == 0b101
+		private int[] locked1ResultCounts = new int[10];
+		// used to see if a value in locked1ResultCounts belongs to a unique row
+		// uniqueRowLookup[1] == 0, [2] == 1, [4] == 2, otherwise -1
+		private int[] locked1UniqueRowLookup = new int[] { -1, 0, 1, -1, 2, -1, -1, -1 };
+		/// <summary>
+		/// Reduces possibilities for cells in cases where a single row or column of a box contains all the occurances of a possibility.
+		/// </summary>
+		private bool FindLockedCandidates1()
+		{
+			foreach (Box box in Grid.Boxes) {
+				for(var i=0;i<10;i++) {
+					locked1ResultCounts[i] = 0;
+				}
+				// loop each row in box
+				for(var r=0;r<3;r++) {
+					for(var c=0;c<3;c++) {
+						Cell cell = box.Cells[c + 3 * r];
+						for(var i=1;i<=9;i++) {
+							if(cell.Possibilities.Contains(i))
+								locked1ResultCounts[i] |= 1 << r; // flag this row as having this possibility
+						}
+					}
+					for(var i=1;i<=9;i++) {
+						int uniqueRow = locked1UniqueRowLookup[locked1ResultCounts[i]];
+						if(uniqueRow > -1) {
+							//Console.WriteLine("Unique row {0} for value {1}", uniqueRow, i);
+							Row row = box.Rows[r];
+							foreach(Cell cell in row.Cells) {
+								if(cell.Box == box || cell.Value > 0)
+									continue;
+
+								// TODO: figure out why this doesn't work
+								/*bool changed = cell.Possibilities.Remove(i);
+								if(changed)
+									Console.WriteLine("Removed possiblity {0} from cell {1}", i, cell.Location);*/
+							}
+						}
+					}
+				}
+			}
+			return false;
 		}
 	}
 }
