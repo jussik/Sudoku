@@ -76,6 +76,27 @@ namespace Sudoku
 		}
 
 		/// <summary>
+		/// Saves the state of the current cell into a <see cref="CellState"/>.
+		/// </summary>
+		public CellState SaveState()
+		{
+			return new CellState
+			{
+				Value = Value,
+				Possibilities = new HashSet<int>(Possibilities)
+			};
+		}
+
+		/// <summary>
+		/// Replaces current values with those in an existing <see cref="CellState"/>.
+		/// </summary>
+		public void LoadState(CellState state)
+		{
+			Value = state.Value;
+			Possibilities = new HashSet<int>(state.Possibilities);
+		}
+
+		/// <summary>
 		/// Returns the value of the current <see cref="Cell"/> as a <see cref="String"/>.
 		/// </summary>
 		public override string ToString()

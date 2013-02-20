@@ -73,6 +73,38 @@ namespace Sudoku
 			return string.Join<Row>("\n", Rows);
 		}
 
+		public void WritePossibilitiesChart()
+		{
+			Console.WriteLine();
+			Console.WriteLine(new string('-', 37));
+			for (int r=0; r<9; r++) {
+				Row row = Rows[r];
+				for(int cr=0;cr<3;cr++) {
+					Console.Write("|");
+					for(int c=0;c<9;c++) {
+						Cell cell = row.Cells[c];
+						if(cell.Value > 0) {
+							if(cr == 1) {
+								Console.Write(">{0}<", cell.Value);
+							} else {
+								Console.Write("   ");
+							}
+						} else {
+							for(int i=0;i<3;i++) {
+								var val = (cr)*3+i+1;
+								Console.Write(cell.Possibilities.Contains(val)
+								              ? val.ToString()
+								              : " ");
+							}
+						}
+						Console.Write("|");
+					}
+					Console.WriteLine();
+				}
+				Console.WriteLine(new String('-', 37));
+			}
+		}
+
 		/// <summary>
 		/// Returns the <see cref="Row"/> at a specific location index.
 		/// </summary>
@@ -92,6 +124,35 @@ namespace Sudoku
 		/// </summary>
 		public Box BoxOf(int i) {
 			return Boxes[(i % 9 ) / 3 + 3 * (i / 27)];
+		}
+
+		/// <summary>
+		/// Saves the current grid into a <see cref="GridState"/>.
+		/// </summary>
+		public GridState SaveState(string description)
+		{
+			GridState state = new GridState
+			{
+				Description = description,
+				Cells = new CellState[81]
+			};
+
+			for (var i=0; i<81; i++) {
+				state.Cells[i] = Cells[i].SaveState();
+			}
+
+			return state;
+		}
+
+		/// <summary>
+		/// Loads the grid from an existing <see cref="GridState"/>.
+		/// </summary>
+		public void LoadState(GridState state) 
+		{
+			for(var i=0;i<81;i++) {
+				Cells[i].LoadState(state.Cells[i]);
+			}
+
 		}
 	}
 }

@@ -21,6 +21,15 @@ namespace Sudoku
 		public string GridString { get; private set; }
 
 		/// <summary>
+		/// Retain a history of every action performed during a solve.
+		/// </summary>
+		public bool SaveStateHistory { get; set; }
+		/// <summary>
+		/// If SaveStateHistory is true, this will contain the list of all states.
+		/// </summary>
+		public StateHistory State { get; set; }
+
+		/// <summary>
 		/// The Grid instance of the <see cref="Puzzle"/>.
 		/// </summary>
 		public Grid Grid { get; private set; }
@@ -46,6 +55,11 @@ namespace Sudoku
 			Grid = new Grid();
 			Grid.Load(GridString);
 
+			if (SaveStateHistory) {
+				State = new StateHistory();
+				State.Add(Grid.SaveState("Initial"));
+			}
+
 			while (!Solved) {
 				// repeat all solvers until solved or no change happens in any solver
 				if(!IterateSolvers(FindSingles, FindHiddenSingles, FindLockedCandidates1))
@@ -65,23 +79,24 @@ namespace Sudoku
 		}
 
 		/// <summary>
-		/// Repeat solvers until no further changes are registered or the <see cref="Puzzle"/> is solved.
+		/// Run solvers until no further changes are registered or the <see cref="Puzzle"/> is solved.
 		/// </summary>
 		private bool IterateSolvers(params Func<bool>[] funcs)
 		{
 			return IterateSolvers(funcs.AsEnumerable());
 		}
 		/// <summary>
-		/// Repeat solvers until no further changes are registered or the <see cref="Puzzle"/> is solved.
+		/// Run solvers until no further changes are registered or the <see cref="Puzzle"/> is solved.
 		/// </summary>
 		private bool IterateSolvers(IEnumerable<Func<bool>> funcs)
 		{
 			bool change = false;
-			// run head of actions until it has no more effect
+			// run head of actions
 			Func<bool> func = funcs.First();
-			while (func()) {
-				change = true;
-			}
+			change = func();
+
+			if(SaveStateHistory)
+				State.Add(Grid.SaveState(func.Method.Name));
 
 			// check for solved
 			if (change && Grid.Cells.All(c => c.Value > 0)) {
@@ -89,7 +104,7 @@ namespace Sudoku
 			}
 
 			// continue using rest of actions, mark changed as true if rest changed
-			if(!Solved && funcs.Count() > 1)
+			if(!change && !Solved && funcs.Count() > 1)
 				change = IterateSolvers(funcs.Skip(1)) || change;
 
 			return change;
@@ -171,11 +186,11 @@ namespace Sudoku
 		private bool FindLockedCandidates1()
 		{
 			foreach (Box box in Grid.Boxes) {
-				for(var i=0;i<10;i++) {
-					locked1ResultCounts[i] = 0;
-				}
 				// loop each row in box
 				for(var r=0;r<3;r++) {
+					for(var i=0;i<10;i++) {
+						locked1ResultCounts[i] = 0;
+					}
 					for(var c=0;c<3;c++) {
 						Cell cell = box.Cells[c + 3 * r];
 						for(var i=1;i<=9;i++) {
@@ -193,9 +208,7 @@ namespace Sudoku
 									continue;
 
 								// TODO: figure out why this doesn't work
-								/*bool changed = cell.Possibilities.Remove(i);
-								if(changed)
-									Console.WriteLine("Removed possiblity {0} from cell {1}", i, cell.Location);*/
+								//bool changed = cell.Possibilities.Remove(i);
 							}
 						}
 					}
