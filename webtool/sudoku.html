@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Sudoku Solver</title>
+        <script type="text/javascript" src="jquery.min.js"></script>
+        <script type="text/javascript" src="sudoku.js"></script>
+        <style>
+            html, body {
+                font-size: 10pt;
+            }
+            .value {
+                font-size: 250%;
+            }
+            .unknown {
+                font-size: 75%;
+                color: #444;
+            }
+            .unknown pre {
+                margin: 0px;
+            }
+            .changed {
+                color: #800;
+            }
+            .heading {
+                font-size: 120%;
+                margin: 5px 0px;
+            }
+            .heading .nochange {
+                color: #444;
+                font-size: 75%;
+            }
+            td {
+                border: 1px solid #888;
+                width: 40px;
+                height: 40px;
+                text-align: center;
+                overflow: hidden;
+            }
+            td:nth-child(3), td:nth-child(6) {
+                border-right: 2px solid black;
+            }
+            tr:nth-child(3), tr:nth-child(6) {
+                border-bottom: 2px solid black;
+            }
+            table {
+                border-collapse: collapse;
+            }
+        </style>
+    </head>
+    <body>
+        <h2>Sudoku history tool</h2>
+
+        <input type="text" id="input" placeholder="Paste JSON history here">
+        <button type="button" id="go">Go!</button><br>
+
+        <label><input type="checkbox" id="show-no-change"> Show checks with no changes</label><br>
+
+        <button type="button" id="prev">&lt;</button>
+        <button type="button" id="next">&gt;</button>
+        (alternatively use the arrow keys)
+
+        <div id="output"></div>
+    <body>
+</html>
