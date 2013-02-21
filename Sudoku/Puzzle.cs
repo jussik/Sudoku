@@ -376,6 +376,9 @@ namespace Sudoku
 			return changed;
 		}
 
+		/// <summary>
+		/// Guess a value by forking new puzzle instances.
+		/// </summary>
 		private bool Guess()
 		{
 			int leastPossibilities = 10;

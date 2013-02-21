@@ -1,3 +1,20 @@
+var checkMap = {
+    Initial:
+        "The initial state of the puzzle.",
+    FindSingles:
+        "A cell only has one possible value.",
+    FindHiddenSingles:
+        "A cell has the only occurance of a possible value in its row, column or box.",
+    FindLockedCandidates1:
+        "A single row or column inside a box contains all occurances of a possible value.",
+    FindLockedCandidates2:
+        "A single box inside a row or column contains all occurances of a possible value.",
+    FindNakedPairs:
+        "Two cells in the same row, column or box have the same two (and only two) possible values.",
+    Guess:
+        "Guess a cell's value."
+}
+
 function formatPossibilities(poss) {
     var text = "     \n     \n     ".split("");
     var pi = 0;
@@ -95,7 +112,7 @@ function drawOutput() {
         for(var i=0;i<grids.length;i++) {
             var grid = grids[i];
             var div = $('<div>').addClass("grid");
-            var h = $('<div>').addClass("heading").text("Check type: " + grid.description).appendTo(div);
+            var h = $('<div>').addClass("heading").html(checkMap[grid.description]).appendTo(div);
             if(!grid.changed) {
                 div.addClass("nochange")
                 $('<span>').addClass("nochange").text(" (no change)").appendTo(h);
