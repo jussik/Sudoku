@@ -51,7 +51,5 @@
   <ItemGroup>
     <None Include="simple.txt" />
     <None Include="sudoku.txt" />
-    <None Include=".gitignore" />
-    <None Include="README.md" />
   </ItemGroup>
 </Project>

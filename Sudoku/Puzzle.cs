@@ -173,52 +173,68 @@ namespace Sudoku
 			return changed;
 		}
 
-		// if a row has a specific possiblity, it is flagged under the index of that possibility value.
-		// row 0 is 0b001, row 1 is 0b010, row 2 is 0b100.
-		// e.g. if both rows 0 and 2 have 8 as a possiblity, then locked1ResultCounts[8] == 0b101
-		private int[] locked1ResultCounts = new int[10];
-		// used to see if a value in locked1ResultCounts belongs to a unique row
-		// uniqueRowLookup[1] == 0, [2] == 1, [4] == 2, otherwise -1
-		private int[] locked1UniqueRowLookup = new int[] { -1, 0, 1, -1, 2, -1, -1, -1 };
 		/// <summary>
 		/// Reduces possibilities for cells in cases where a single row or column of a box contains all the occurances of a possibility.
 		/// </summary>
 		private bool FindLockedCandidates1()
 		{
+			// Find locked candidates in rows
+			bool changed = FindLockedCandidates1Inner(
+				(row, cell) => cell + 3 * row,
+				(box, row) => box.Rows[row]);
+			// Find locked candidates in columns
+			return FindLockedCandidates1Inner(
+				(col, cell) => col + 3 * cell,
+				(box, col) => box.Columns[col]) || changed;
+		}
+		
+		// if a row/column has a specific possiblity, it is flagged under the index of that possibility value.
+		// row 0 is 0b001, row 1 is 0b010, row 2 is 0b100.
+		// e.g. if both rows 0 and 2 have 8 as a possiblity, then locked1ResultCounts[8] == 0b101
+		private int[] locked1ResultCounts = new int[10];
+		// used to see if a value in locked1ResultCounts belongs to a unique row/column
+		// uniqueRowLookup[1] == 0, [2] == 1, [4] == 2, otherwise -1
+		private int[] locked1UniqueSegLookup = new int[] { -1, 0, 1, -1, 2, -1, -1, -1 };
+		// cellIndexSelector takes the index of the segment (row or column) and the index of the cell in that segment
+		//   and expects the index of that cell with respect to the box it resides in
+		// segmentSelector takes a box and the index of a segment in that box and expects an object reference to that box
+		private bool FindLockedCandidates1Inner(Func<int, int, int> cellIndexSelector, Func<Box, int, Segment> segmentSelector)
+		{
+			bool changed = false;
 			foreach (Box box in Grid.Boxes) {
-				// loop each row in box
-				// TODO: move resetResults here
-				for(var r=0;r<3;r++) {
-					// resetResults:
-					for(var i=0;i<10;i++) {
-						locked1ResultCounts[i] = 0;
-					}
-					for(var c=0;c<3;c++) {
-						Cell cell = box.Cells[c + 3 * r];
-						for(var i=1;i<=9;i++) {
-							if(cell.Possibilities.Contains(i))
-								locked1ResultCounts[i] |= 1 << r; // flag this row as having this possibility
-						}
-					}
-					// analysis:
-					for(var i=1;i<=9;i++) {
-						int uniqueRow = locked1UniqueRowLookup[locked1ResultCounts[i]];
-						if(uniqueRow > -1) {
-							//Console.WriteLine("Unique row {0} for value {1}", uniqueRow, i);
-							Row row = box.Rows[r];
-							foreach(Cell cell in row.Cells) {
-								if(cell.Box == box || cell.Value > 0)
-									continue;
-
-								// TODO: figure out why this doesn't work
-								//bool changed = cell.Possibilities.Remove(i);
+				// loop each row/column in box
+				for (var i=0; i<10; i++) {
+					locked1ResultCounts[i] = 0;
+				}
+			
+				for (var seg=0; seg<3; seg++) {
+					for (var cellPos=0; cellPos<3; cellPos++) {
+						Cell cell = box.Cells[cellIndexSelector(seg, cellPos)];
+						if (cell.Value == 0) {
+							for (var val=1; val<=9; val++) {
+								if (cell.Possibilities.Contains(val))
+									// flag this row/col as having this possibility
+									locked1ResultCounts[val] |= 1 << seg;
 							}
 						}
 					}
 				}
-				// TODO: move analysis here
+			
+				// check for unique rows/columns
+				for (var val=1; val<=9; val++) {
+					int uniqueRow = locked1UniqueSegLookup[locked1ResultCounts[val]];
+					if (uniqueRow > -1) {
+						Segment seg = segmentSelector(box, uniqueRow);
+						foreach (Cell cell in seg.Cells) {
+							if (cell.Box == box || cell.Value > 0)
+								continue;
+						
+							changed = cell.Possibilities.Remove(val) || changed;
+						}
+					}
+				}
 			}
-			return false;
+			return changed;
 		}
 	}
 }
