@@ -51,5 +51,6 @@
   <ItemGroup>
     <None Include="simple.txt" />
     <None Include="sudoku.txt" />
+    <None Include="difficult.txt" />
   </ItemGroup>
 </Project>

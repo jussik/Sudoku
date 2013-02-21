@@ -37,10 +37,6 @@ namespace Sudoku
 		/// Gets a value indicating whether this <see cref="Puzzle"/> is solved.
 		/// </summary>
 		public bool Solved { get; private set; }
-		/// <summary>
-		/// Gets a value indicating whether this <see cref="Puzzle"/> has changed from its original state.
-		/// </summary>
-		public bool Changed { get; private set; }
 
 		/// <summary>
 		/// Initializes a new Sudoku <see cref="Puzzle"/> instance from a string.
@@ -78,21 +74,15 @@ namespace Sudoku
 			}
 
 			InitLog2Lookup();
-
+			
+			// repeat all solvers until solved or no change happens in any solver
 			while (!Solved) {
-				// repeat all solvers until solved or no change happens in any solver
-				bool changedThisIteration = IterateSolvers(FindSingles,
-				                              FindHiddenSingles,
-				                              FindLockedCandidates1,
-				                              FindLockedCandidates2,
-				                              FindNakedPairs,
-				                              Guess);
-
-				// keep note of if we have ever changed
-				Changed = Changed || changedThisIteration;
-
-				// no change in any solver means we're stuck
-				if(!changedThisIteration)
+				if (!IterateSolvers(FindSingles,
+						FindHiddenSingles,
+						FindLockedCandidates1,
+						FindLockedCandidates2,
+						FindNakedPairs,
+						Guess))
 					break;
 			}
 		}
@@ -388,11 +378,6 @@ namespace Sudoku
 
 		private bool Guess()
 		{
-			// If we haven't changed the grid at all up to this point, give up
-			// this should prevent infinite recursion
-			if(!Changed)
-				return false;
-
 			int leastPossibilities = 10;
 			int bestCandidate = -1;
 
