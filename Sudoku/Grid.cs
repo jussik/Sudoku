@@ -23,13 +23,10 @@ namespace Sudoku
 		public Box[] Boxes { get; private set; }
 
 		/// <summary>
-		/// Load the <see cref="Grid"/> with the contents of the string.
+		/// Initializes a new <see cref="Sudoku.Grid"/> and prepares its Rows, Columns, Boxes and Cells.
 		/// </summary>
-		public void Load(string gridString)
+		public Grid()
 		{
-			if(gridString.Length < 81)
-				throw new Exception("Grid string not of length 81");
-			
 			Rows = new Row[9];
 			Columns = new Column[9];
 			Boxes = new Box[9];
@@ -38,7 +35,7 @@ namespace Sudoku
 				Columns[i] = new Column(i, this);
 				Boxes[i] = new Box(i, this);
 			}
-
+			
 			Cells = new Cell[81];
 			for (var i=0; i<81; i++) {
 				Cell c = new Cell {
@@ -49,13 +46,21 @@ namespace Sudoku
 					Column = ColumnOf(i),
 					Box = BoxOf(i)
 				};
-
+				
 				c.Possibilities.UnionWith(Enumerable.Range(1,9));
 				
 				Cells[i] = c;
 			}
+		}
 
-			// Needs to be in two passes as settings values requires all adjacents to exist
+		/// <summary>
+		/// Load the <see cref="Grid"/> with the contents of the string.
+		/// </summary>
+		public void Load(string gridString)
+		{
+			if(gridString.Length < 81)
+				throw new Exception("Grid string not of length 81");
+
 			for (var i=0; i<81; i++) {
 				int val = gridString[i] - 48;
 				if(val < 0 || val > 9)
@@ -128,6 +133,13 @@ namespace Sudoku
 
 		/// <summary>
 		/// Saves the current grid into a <see cref="GridState"/>.
+		/// </summary>
+		public GridState SaveState()
+		{
+			return SaveState(null);
+		}
+		/// <summary>
+		/// Saves the current grid into a <see cref="GridState"/> using a particular description.
 		/// </summary>
 		public GridState SaveState(string description)
 		{

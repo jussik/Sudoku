@@ -37,38 +37,62 @@ namespace Sudoku
 		/// Gets a value indicating whether this <see cref="Puzzle"/> is solved.
 		/// </summary>
 		public bool Solved { get; private set; }
+		/// <summary>
+		/// Gets a value indicating whether this <see cref="Puzzle"/> has changed from its original state.
+		/// </summary>
+		public bool Changed { get; private set; }
 
 		/// <summary>
-		/// Initializes a new Sudoku <see cref="Puzzle"/> instance.
+		/// Initializes a new Sudoku <see cref="Puzzle"/> instance from a string.
 		/// </summary>
 		public Puzzle(string name, string gridString)
 		{
 			Name = name;
 			GridString = gridString;
-		}
 
+			Grid = new Grid();
+			Grid.Load(GridString);
+		}
+		
+		/// <summary>
+		/// Initializes a new Sudoku <see cref="Puzzle"/> instance from a grid.
+		/// </summary>
+		public Puzzle(string name, Grid grid)
+		{
+			Name = name;
+			Grid = grid;
+		}
+		
+		public void Solve()
+		{
+			Solve("Initial");
+		}
 		/// <summary>
 		/// Solve the <see cref="Puzzle"/>.
 		/// </summary>
-		public void Solve()
+		public void Solve(string initialStateDescription)
 		{
-			Grid = new Grid();
-			Grid.Load(GridString);
-
 			if (SaveStateHistory) {
 				State = new StateHistory();
-				State.Add(Grid.SaveState("Initial"));
+				State.Add(Grid.SaveState(initialStateDescription));
 			}
 
 			InitLog2Lookup();
 
 			while (!Solved) {
 				// repeat all solvers until solved or no change happens in any solver
-				if(!IterateSolvers(FindSingles,
-				                   FindHiddenSingles,
-				                   FindLockedCandidates1,
-				                   FindLockedCandidates2,
-				                   FindNakedPairs))
+				bool changedThisIteration = IterateSolvers(FindSingles,
+				                              FindHiddenSingles,
+				                              FindLockedCandidates1,
+				                              FindLockedCandidates2,
+				                              FindNakedPairs,
+				                              Guess);
+
+				// keep note of if we have ever changed
+				Changed = Changed || changedThisIteration;
+
+				// no change in any solver means we're stuck
+				if(!changedThisIteration)
 					break;
 			}
 		}
@@ -101,16 +125,20 @@ namespace Sudoku
 			Func<bool> func = funcs.First();
 			change = func();
 
+			if(Solved)
+				return true; // This use case happens if we guess
+
 			if(SaveStateHistory)
 				State.Add(Grid.SaveState(func.Method.Name));
 
 			// check for solved
 			if (change && Grid.Cells.All(c => c.Value > 0)) {
 				Solved = true;
+				return true;
 			}
 
 			// continue using rest of actions, mark changed as true if rest changed
-			if(!change && !Solved && funcs.Count() > 1)
+			if(!change && funcs.Count() > 1)
 				change = IterateSolvers(funcs.Skip(1)) || change;
 
 			return change;
@@ -256,12 +284,16 @@ namespace Sudoku
 			}
 			return changed;
 		}
-		
+
+		/// <summary>
+		/// Reduces possibilities for cells in cases where a single box in a row or column contains all the occurances of a possibility.
+		/// </summary>
 		private bool FindLockedCandidates2()
 		{
 			bool changed = FindLockedCandidates2Inner(Grid.Rows, (cell, row) => cell.Row == row);
 			return FindLockedCandidates2Inner(Grid.Columns, (cell, col) => cell.Column == col) || changed;
 		}
+		// segComparer takes a cell and a segment and expects a true if that cell is in that segment
 		private bool FindLockedCandidates2Inner(IEnumerable<Segment> segments, Func<Cell,Segment,bool> segComparer)
 		{
 			bool changed = false;
@@ -352,6 +384,48 @@ namespace Sudoku
 			}
 			
 			return changed;
+		}
+
+		private bool Guess()
+		{
+			// If we haven't changed the grid at all up to this point, give up
+			// this should prevent infinite recursion
+			if(!Changed)
+				return false;
+
+			int leastPossibilities = 10;
+			int bestCandidate = -1;
+
+			for (int ci=0; ci<81; ci++) {
+				Cell cell = Grid.Cells[ci];
+				if (cell.Value == 0 && cell.Possibilities.Count < leastPossibilities) {
+					leastPossibilities = cell.Possibilities.Count;
+					bestCandidate = ci;
+				}
+			}
+
+			if (bestCandidate > -1) {
+				foreach(int p in Grid.Cells[bestCandidate].Possibilities) {
+					Grid newGrid = new Grid();
+					newGrid.LoadState(Grid.SaveState());
+
+					newGrid.Cells[bestCandidate].Value = p;
+
+					Puzzle puzzle = new Puzzle(Name, newGrid);
+					puzzle.SaveStateHistory = SaveStateHistory;
+
+					puzzle.Solve("Guess");
+					
+					if(puzzle.Solved) {
+						Grid.LoadState(newGrid.SaveState());
+						State.Concat(puzzle.State);
+						Solved = true;
+						return true;
+					}
+				}
+			}
+
+			return false;
 		}
 	}
 }

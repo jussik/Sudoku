@@ -17,6 +17,11 @@ namespace Sudoku
 			States.Add(state);
 		}
 
+		public void Concat(StateHistory history)
+		{
+			States.AddRange(history.States);
+		}
+
 		public string ToJson()
 		{
 			return string.Format("[{0},{1}]",
