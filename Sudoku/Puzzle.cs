@@ -62,7 +62,11 @@ namespace Sudoku
 
 			while (!Solved) {
 				// repeat all solvers until solved or no change happens in any solver
-				if(!IterateSolvers(FindSingles, FindHiddenSingles, FindLockedCandidates1))
+				if(!IterateSolvers(FindSingles,
+				                   FindHiddenSingles,
+				                   FindLockedCandidates1,
+				                   FindLockedCandidates2,
+				                   FindNakedPairs))
 					break;
 			}
 		}
@@ -234,6 +238,68 @@ namespace Sudoku
 					}
 				}
 			}
+			return changed;
+		}
+
+		private bool FindLockedCandidates2()
+		{
+			// TODO: do this
+			return false;
+		}
+
+		/// <summary>
+		/// Finds situations where two cells in a segment have the same (and only) 2 possibilities.
+		/// </summary>
+		private bool FindNakedPairs()
+		{
+			bool changed = FindNakedPairsInner(Grid.Rows);
+			changed = FindNakedPairsInner(Grid.Columns) || changed;
+			return FindNakedPairsInner(Grid.Boxes) || changed;
+		}
+		// stores a pair of possibilities for all cells that have exactly 2 possibilities
+		private int[][] nakedPairBuffer = new int[9][];
+		private bool FindNakedPairsInner(IEnumerable<Segment> segments)
+		{
+			bool changed = false;
+			
+			foreach (Segment r in segments) {
+				// reset pair buffer
+				for(var i=0;i<9;i++) {
+					nakedPairBuffer[i] = null;
+				}
+				
+				for(var i=0;i<9;i++) {
+					Cell cell = r.Cells[i];
+					if(cell.Value == 0 && cell.Possibilities.Count == 2) {
+						// possibilities should (!) always be in order, but it depends on implementation
+						// we'll sort them just in case
+						nakedPairBuffer[i] = cell.Possibilities.OrderBy(n => n).ToArray();
+					}
+				}
+				
+				for(var i=0;i<8;i++) {
+					if(nakedPairBuffer[i] != null) {
+						int[] pair1 = nakedPairBuffer[i];
+						for(var j=i+1;j<9;j++) {
+							int[] pair2 = nakedPairBuffer[j];
+							if(pair2 != null && pair1[0] == pair2[0] && pair1[1] == pair2[1]) {
+								for(var c=0;c<9;c++) {
+									if(c == i || c == j)
+										continue;
+									
+									Cell cell = r.Cells[c];
+									if(cell.Value > 0)
+										continue;
+									
+									changed = cell.Possibilities.Remove(pair1[0]) || changed;
+									changed = cell.Possibilities.Remove(pair1[1]) || changed;
+								}
+							}
+						}
+					}
+				}
+			}
+			
 			return changed;
 		}
 	}

@@ -15,8 +15,9 @@ function formatGrid(grid) {
     for(var i=0;i<9;i++) {
         var row = $('<tr>').appendTo(table);
         for(var j=0;j<9;j++) {
-            var td = $('<td>').addClass("cell_"+(j+i*9)).appendTo(row);
-            var cell = grid[j+i*9];
+            var id = j + i * 9;
+            var td = $('<td>').addClass("cell_"+id).prop("title", "Cell"+id).appendTo(row);
+            var cell = grid[id];
             if(cell.value) {
                 td.addClass("value").text(cell.value);
             } else {
