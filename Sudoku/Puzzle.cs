@@ -187,7 +187,9 @@ namespace Sudoku
 		{
 			foreach (Box box in Grid.Boxes) {
 				// loop each row in box
+				// TODO: move resetResults here
 				for(var r=0;r<3;r++) {
+					// resetResults:
 					for(var i=0;i<10;i++) {
 						locked1ResultCounts[i] = 0;
 					}
@@ -198,6 +200,7 @@ namespace Sudoku
 								locked1ResultCounts[i] |= 1 << r; // flag this row as having this possibility
 						}
 					}
+					// analysis:
 					for(var i=1;i<=9;i++) {
 						int uniqueRow = locked1UniqueRowLookup[locked1ResultCounts[i]];
 						if(uniqueRow > -1) {
@@ -213,6 +216,7 @@ namespace Sudoku
 						}
 					}
 				}
+				// TODO: move analysis here
 			}
 			return false;
 		}
