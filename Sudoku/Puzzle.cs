@@ -60,6 +60,8 @@ namespace Sudoku
 				State.Add(Grid.SaveState("Initial"));
 			}
 
+			InitLog2Lookup();
+
 			while (!Solved) {
 				// repeat all solvers until solved or no change happens in any solver
 				if(!IterateSolvers(FindSingles,
@@ -114,6 +116,23 @@ namespace Sudoku
 			return change;
 		}
 
+		// We'll be needing a log2 lookup table for a couple of solvers
+		// returns the log2 of the index if the result is an integer, -1 if not
+		// max log2 is 2**LOG2_LOOKUP_SIZE-1
+		private const int LOG2_LOOKUP_SIZE = 3;
+		private static int[] log2Lookup = new int[1 << LOG2_LOOKUP_SIZE];
+		private static void InitLog2Lookup()
+		{
+			if (log2Lookup[0] == 0) {
+				for(int i=0;i<(1<<LOG2_LOOKUP_SIZE);i++) {
+					log2Lookup[i] = -1;
+				}
+				for(int i=0;i<LOG2_LOOKUP_SIZE;i++) {
+					log2Lookup[1 << i] = i;
+				}
+			}
+		}
+
 		/// <summary>
 		/// Solve for cells where they only have a single possible value.
 		/// </summary>
@@ -152,7 +171,7 @@ namespace Sudoku
 			bool changed = false;
 			foreach (Segment seg in segments) {
 				// reset counts for every row/col/box
-				for(var i=0;i<10;i++) {
+				for(int i=0;i<10;i++) {
 					hiddenSinglesResultCounts[i] = 0;
 				}
 
@@ -167,7 +186,7 @@ namespace Sudoku
 				}
 
 				// if we find a possibility with a single owner cell, apply that value to the cell
-				for (var i=1; i<=9; i++) {
+				for (int i=1; i<=9; i++) {
 					if(hiddenSinglesResultCounts[i] == 1) {
 						hiddenSinglesResultTargets[i].Value = i;
 						changed = true;
@@ -192,13 +211,11 @@ namespace Sudoku
 				(box, col) => box.Columns[col]) || changed;
 		}
 		
-		// if a row/column has a specific possiblity, it is flagged under the index of that possibility value.
+		// if a segment has a specific possiblity, it is flagged under the index of that possibility value.
 		// row 0 is 0b001, row 1 is 0b010, row 2 is 0b100.
-		// e.g. if both rows 0 and 2 have 8 as a possiblity, then locked1ResultCounts[8] == 0b101
-		private int[] locked1ResultCounts = new int[10];
-		// used to see if a value in locked1ResultCounts belongs to a unique row/column
-		// uniqueRowLookup[1] == 0, [2] == 1, [4] == 2, otherwise -1
-		private int[] locked1UniqueSegLookup = new int[] { -1, 0, 1, -1, 2, -1, -1, -1 };
+		// e.g. if both rows 0 and 2 have 8 as a possiblity, then lockedResultCounts[8] == 0b101
+		private int[] lockedResultCounts = new int[10];
+
 		// cellIndexSelector takes the index of the segment (row or column) and the index of the cell in that segment
 		//   and expects the index of that cell with respect to the box it resides in
 		// segmentSelector takes a box and the index of a segment in that box and expects an object reference to that box
@@ -206,27 +223,26 @@ namespace Sudoku
 		{
 			bool changed = false;
 			foreach (Box box in Grid.Boxes) {
-				// loop each row/column in box
-				for (var i=0; i<10; i++) {
-					locked1ResultCounts[i] = 0;
+				for (int i=0; i<10; i++) {
+					lockedResultCounts[i] = 0;
 				}
 			
-				for (var seg=0; seg<3; seg++) {
-					for (var cellPos=0; cellPos<3; cellPos++) {
-						Cell cell = box.Cells[cellIndexSelector(seg, cellPos)];
+				// loop each row/column in box
+				for (int seg=0; seg<3; seg++) {
+					for (int ic=0; ic<3; ic++) {
+						Cell cell = box.Cells[cellIndexSelector(seg, ic)];
 						if (cell.Value == 0) {
-							for (var val=1; val<=9; val++) {
-								if (cell.Possibilities.Contains(val))
-									// flag this row/col as having this possibility
-									locked1ResultCounts[val] |= 1 << seg;
+							foreach(int p in cell.Possibilities) {
+								// flag this row/col as having this possibility
+								lockedResultCounts[p] |= 1 << seg;
 							}
 						}
 					}
 				}
 			
 				// check for unique rows/columns
-				for (var val=1; val<=9; val++) {
-					int uniqueRow = locked1UniqueSegLookup[locked1ResultCounts[val]];
+				for (int val=1; val<=9; val++) {
+					int uniqueRow = log2Lookup[lockedResultCounts[val]];
 					if (uniqueRow > -1) {
 						Segment seg = segmentSelector(box, uniqueRow);
 						foreach (Cell cell in seg.Cells) {
@@ -240,11 +256,46 @@ namespace Sudoku
 			}
 			return changed;
 		}
-
+		
 		private bool FindLockedCandidates2()
 		{
-			// TODO: do this
-			return false;
+			bool changed = FindLockedCandidates2Inner(Grid.Rows, (cell, row) => cell.Row == row);
+			return FindLockedCandidates2Inner(Grid.Columns, (cell, col) => cell.Column == col) || changed;
+		}
+		private bool FindLockedCandidates2Inner(IEnumerable<Segment> segments, Func<Cell,Segment,bool> segComparer)
+		{
+			bool changed = false;
+			foreach (Segment seg in segments) {
+				// clear results
+				for (int i=0; i<10; i++) {
+					lockedResultCounts[i] = 0;
+				}
+
+				// check which box each possibility falls in
+				for(int ib=0;ib<3;ib++) {
+					for(int ic=0;ic<3;ic++) {
+						Cell cell = seg.Cells[ic + 3 * ib];
+						if(cell.Value == 0) {
+							foreach(int p in cell.Possibilities)
+								lockedResultCounts[p] |= 1 << ib;
+						}
+					}
+				}
+				// if possibilities fall only in one box, remove that possibilitiy from the other cells in the box
+				for(int val=0;val<9;val++) {
+					int uniqueBox = log2Lookup[lockedResultCounts[val]];
+					if(uniqueBox > -1) {
+						Box box = seg.Cells[uniqueBox * 3].Box;
+						foreach(Cell cell in box.Cells) {
+							if (segComparer(cell, seg) || cell.Value > 0)
+								continue;
+
+							changed = cell.Possibilities.Remove(val) || changed;
+						}
+					}
+				}
+			}
+			return changed;
 		}
 
 		/// <summary>
@@ -264,11 +315,11 @@ namespace Sudoku
 			
 			foreach (Segment r in segments) {
 				// reset pair buffer
-				for(var i=0;i<9;i++) {
+				for(int i=0;i<9;i++) {
 					nakedPairBuffer[i] = null;
 				}
 				
-				for(var i=0;i<9;i++) {
+				for(int i=0;i<9;i++) {
 					Cell cell = r.Cells[i];
 					if(cell.Value == 0 && cell.Possibilities.Count == 2) {
 						// possibilities should (!) always be in order, but it depends on implementation
@@ -277,13 +328,13 @@ namespace Sudoku
 					}
 				}
 				
-				for(var i=0;i<8;i++) {
+				for(int i=0;i<8;i++) {
 					if(nakedPairBuffer[i] != null) {
 						int[] pair1 = nakedPairBuffer[i];
-						for(var j=i+1;j<9;j++) {
+						for(int j=i+1;j<9;j++) {
 							int[] pair2 = nakedPairBuffer[j];
 							if(pair2 != null && pair1[0] == pair2[0] && pair1[1] == pair2[1]) {
-								for(var c=0;c<9;c++) {
+								for(int c=0;c<9;c++) {
 									if(c == i || c == j)
 										continue;
 									
